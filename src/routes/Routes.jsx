@@ -1,20 +1,20 @@
-import { createBrowserRouter } from 'react-router-dom'
-import Main from '../layouts/Main'
-import Home from '../pages/Home'
-import Login from '../pages/Authentication/Login'
-import Register from '../pages/Authentication/Register'
-import JobDetails from '../pages/JobDetails'
-import AddJob from '../pages/AddJob'
-import ErrorPage from '../pages/ErrorPage'
-import MyPostedJobs from '../pages/MyPostedJobs'
-import UpdateJob from '../pages/UpdateJob'
-import PrivateRoute from './PrivateRoute'
-import MyBids from '../pages/MyBids'
-import BidRequests from '../pages/BidRequests'
-import AllJobs from '../pages/AllJobs'
+import { createBrowserRouter } from "react-router-dom";
+import Main from "../layouts/Main";
+import Home from "../pages/Home";
+import Login from "../pages/Authentication/Login";
+import Register from "../pages/Authentication/Register";
+import JobDetails from "../pages/JobDetails";
+import AddJob from "../pages/AddJob";
+import ErrorPage from "../pages/ErrorPage";
+import MyPostedJobs from "../pages/MyPostedJobs";
+import UpdateJob from "../pages/UpdateJob";
+import PrivateRoute from "./PrivateRoute";
+import MyBids from "../pages/MyBids";
+import BidRequests from "../pages/BidRequests";
+import AllJobs from "../pages/AllJobs";
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Main />,
     errorElement: <ErrorPage />,
     children: [
@@ -23,35 +23,38 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: '/jobs',
+        path: "/jobs",
         element: <AllJobs />,
       },
       {
-        path: '/login',
+        path: "/login",
         element: <Login />,
       },
       {
-        path: '/registration',
+        path: "/registration",
         element: <Register />,
       },
       {
-        path: '/job/:id',
+        path: "/job/:id",
         element: (
           <PrivateRoute>
             <JobDetails />
           </PrivateRoute>
         ),
+        loader: ({ params }) =>
+          fetch(`${import.meta.env.VITE_URL}/job/${params.id}`),
       },
       {
-        path: '/update/:id',
+        path: "/update/:id",
         element: (
           <PrivateRoute>
             <UpdateJob />
           </PrivateRoute>
         ),
+        loader: ({ params }) => fetch(`http://localhost:9000/job/${params.id}`),
       },
       {
-        path: '/add-job',
+        path: "/add-job",
         element: (
           <PrivateRoute>
             <AddJob />
@@ -59,7 +62,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: '/my-bids',
+        path: "/my-bids",
         element: (
           <PrivateRoute>
             <MyBids />
@@ -67,7 +70,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: '/my-posted-jobs',
+        path: "/my-posted-jobs",
         element: (
           <PrivateRoute>
             <MyPostedJobs />
@@ -75,7 +78,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: '/bid-requests',
+        path: "/bid-requests",
         element: (
           <PrivateRoute>
             <BidRequests />
@@ -84,6 +87,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+]);
 
-export default router
+export default router;
