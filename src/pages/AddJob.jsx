@@ -4,33 +4,58 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Swal from "sweetalert2";
 import { AuthContext } from "../providers/AuthProvider";
+import { useNavigate } from "react-router-dom";
+import useAxiosSecure from "../hooks/useAxiosSecure";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const AddJob = () => {
   const [startDate, setStartDate] = useState(new Date());
   const { user } = useContext(AuthContext);
+  const axiosSecure = useAxiosSecure();
   const formRef = useRef();
+  const navigate = useNavigate();
+  const { isPending, mutateAsync } = useMutation({
+    mutationFn: async (jobsData) => {
+      await axiosSecure.post(`/jobs`, jobsData);
+    },
+    onSuccess: () => {
+      Swal.fire({
+        title: "Job added",
+        text: "Job added successfully",
+        icon: "success",
+      });
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const initialData = Object.fromEntries(formData.entries());
     const jobsData = {
       ...initialData,
+      buyer: {
+        email: user?.email,
+        name: user?.displayName,
+        photo: user?.photoURL,
+      },
+      bid_count: 0,
       deadline: new Date(startDate).toLocaleDateString(),
-      name: user.displayName,
     };
     try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_URL}/jobs`,
-        jobsData
-      );
-      if (data.insertedId) {
-        Swal.fire({
-          title: "Job added",
-          text: "Job added successfully",
-          icon: "success",
-        });
-        formRef.current.reset();
-      }
+      // const { data } = await axiosSecure.post(`/jobs`, jobsData);
+      // if (data.insertedId) {
+      //   Swal.fire({
+      //     title: "Job added",
+      //     text: "Job added successfully",
+      //     icon: "success",
+      //   });
+      await mutateAsync(jobsData);
+      navigate("/my-posted-jobs");
+      formRef.current.reset();
     } catch (err) {}
   };
   return (

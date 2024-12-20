@@ -1,30 +1,22 @@
-import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Swal from "sweetalert2";
+import useAxiosSecure from "../hooks/useAxiosSecure";
+import { useQuery } from "@tanstack/react-query";
 
 const MyPostedJobs = () => {
-  const [jobs, setJobs] = useState();
-  const [localLoading, setLocalLoading] = useState(false);
   const { user } = useContext(AuthContext);
-  useEffect(() => {
-    fetchData();
-  }, [user]);
+  const axiosSecure = useAxiosSecure();
 
-  const fetchData = async () => {
-    try {
-      setLocalLoading(true);
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_URL}/jobs/${user?.email}`
-      );
-      setJobs(data);
-    } catch (err) {
-    } finally {
-      setLocalLoading(false);
-    }
-  };
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ["myJobs"],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/jobs/${user?.email}`);
+      return data;
+    },
+  });
 
   const handleDelete = async (id) => {
     try {
@@ -40,7 +32,7 @@ const MyPostedJobs = () => {
 
       // Check if the user confirmed the deletion
       if (result.isConfirmed) {
-        const { data } = await axios.delete(
+        const { data } = await axiosSecure.delete(
           `${import.meta.env.VITE_URL}/job/${id}`
         );
 
@@ -65,7 +57,7 @@ const MyPostedJobs = () => {
         <span
           className={`x-3 py-1 text-xs text-blue-600 bg-blue-100 rounded-full `}
         >
-          4 Job
+          {jobs?.length} Job
         </span>
       </div>
 
@@ -120,7 +112,7 @@ const MyPostedJobs = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 ">
-                  {!localLoading &&
+                  {!isLoading &&
                     jobs?.map((job) => (
                       <tr key={job._id}>
                         <td className="px-4 py-4 text-sm text-gray-500  whitespace-nowrap">
@@ -202,7 +194,7 @@ const MyPostedJobs = () => {
                     ))}
                 </tbody>
               </table>
-              {localLoading && <LoadingSpinner></LoadingSpinner>}
+              {isLoading && <LoadingSpinner></LoadingSpinner>}
             </div>
           </div>
         </div>

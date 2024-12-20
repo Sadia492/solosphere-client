@@ -2,12 +2,28 @@ import { useContext, useEffect, useState } from "react";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useLoaderData, useParams } from "react-router-dom";
+import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import axios from "axios";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import useAxiosSecure from "../hooks/useAxiosSecure";
+import { useQuery } from "@tanstack/react-query";
 
 const JobDetails = () => {
-  const data = useLoaderData();
+  // const data = useLoaderData();
+  const { id } = useParams();
+  const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const { data, isLoading } = useQuery({
+    queryKey: ["jobDetails"],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/job/${id}`);
+      return data;
+    },
+  });
+
   const {
     job_title,
     _id,
@@ -16,20 +32,64 @@ const JobDetails = () => {
     max_price,
     description,
     deadline,
-    email,
-    name,
+    buyer,
+    bid_count,
   } = data || {};
+
   // const { setLoading, loading } = useContext(AuthContext);
-  const [startDate, setStartDate] = useState(new Date(deadline));
-  const handleSubmit = (e) => {
+  const [startDate, setStartDate] = useState(new Date());
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const initialData = Object.fromEntries(formData.entries());
-    const jobsData = {
-      ...initialData,
-      deadline: new Date(startDate).toLocaleDateString(),
-      name: user.displayName,
+    const form = e.target;
+    const price = form.price.value;
+    const email = form.email.value;
+    const comment = form.comment.value;
+    const deadline = new Date(startDate).toLocaleDateString();
+    const jobId = _id;
+
+    const bidsData = {
+      price,
+      email,
+      comment,
+      deadline,
+      jobId,
+      job_title,
+      category,
+      status: "pending",
+      buyer: buyer?.email,
     };
+    // console.log(bidData);
+    if (parseFloat(max_price) < parseFloat(price)) {
+      return toast.error("Price can not be more than maximum price");
+    }
+    if (new Date() > new Date(data.deadline)) {
+      return toast.error("Deadline Crossed, Bidding Forbidden!");
+    }
+    if (new Date(data.deadline) < new Date(deadline)) {
+      return toast.error("Offer a date within deadline");
+    }
+    if (email === buyer?.email) {
+      return toast.error("You can not bid as you have posted the job");
+    }
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_URL}/bids`,
+        bidsData
+      );
+      console.log("Response from server:", data);
+      if (data.insertedId) {
+        Swal.fire({
+          title: "Bid requested",
+          text: "bid requested successfully",
+          icon: "success",
+        });
+        navigate("/my-bids");
+        form.reset();
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error(err?.response?.data);
+    }
   };
   return (
     <div className="flex flex-col md:flex-row justify-around gap-5  items-center min-h-[calc(100vh-306px)] md:max-w-screen-xl mx-auto ">
@@ -55,14 +115,15 @@ const JobDetails = () => {
           </p>
           <div className="flex items-center gap-5">
             <div>
-              <p className="mt-2 text-sm  text-gray-600 ">Name: {name}</p>
-              <p className="mt-2 text-sm  text-gray-600 ">Email: {email}</p>
+              <p className="mt-2 text-sm  text-gray-600 ">
+                Name: {buyer?.name}
+              </p>
+              <p className="mt-2 text-sm  text-gray-600 ">
+                Email: {buyer?.email}
+              </p>
             </div>
             <div className="rounded-full object-cover overflow-hidden w-14 h-14">
-              <img
-                src="https://i.ibb.co.com/qsfs2TW/Ix-I18-R8-Y-400x400.jpg"
-                alt=""
-              />
+              <img src={buyer?.photo} alt="" />
             </div>
           </div>
           <p className="mt-6 text-lg font-bold text-gray-600 ">
@@ -99,7 +160,8 @@ const JobDetails = () => {
                 id="emailAddress"
                 type="email"
                 name="email"
-                disabled
+                readOnly
+                defaultValue={user?.email}
                 className="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md   focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40  focus:outline-none focus:ring"
               />
             </div>

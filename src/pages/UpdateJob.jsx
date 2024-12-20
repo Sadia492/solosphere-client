@@ -5,8 +5,19 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import Swal from "sweetalert2";
 import axios from "axios";
+import useAxiosSecure from "../hooks/useAxiosSecure";
+import { useQuery } from "@tanstack/react-query";
 
 const UpdateJob = () => {
+  const axiosSecure = useAxiosSecure();
+  const { data, isLoading } = useQuery({
+    queryKey: ["updateJobs"],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/job/${id}`);
+      return data;
+    },
+  });
+
   const {
     job_title,
     _id,
@@ -15,8 +26,8 @@ const UpdateJob = () => {
     max_price,
     description,
     deadline,
-    email,
-  } = useLoaderData();
+    buyer,
+  } = data || {};
   const { user } = useContext(AuthContext);
   const formRef = useRef();
   const navigate = useNavigate();
@@ -32,10 +43,7 @@ const UpdateJob = () => {
     };
 
     try {
-      const { data } = await axios.put(
-        `${import.meta.env.VITE_URL}/job/${_id}`,
-        jobsData
-      );
+      const { data } = await axiosSecure.put(`/job/${_id}`, jobsData);
       if (data.modifiedCount) {
         Swal.fire({
           title: "Job updated",
@@ -77,7 +85,7 @@ const UpdateJob = () => {
               <input
                 id="emailAddress"
                 type="email"
-                defaultValue={email}
+                defaultValue={buyer?.email}
                 readOnly
                 name="email"
                 disabled
@@ -86,12 +94,13 @@ const UpdateJob = () => {
             </div>
             <div className="flex flex-col gap-2 ">
               <label className="text-gray-700">Deadline</label>
-
-              <DatePicker
-                className="border p-2 rounded-md"
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-              />
+              {deadline && (
+                <DatePicker
+                  className="border p-2 rounded-md"
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                />
+              )}
             </div>
 
             <div className="flex flex-col gap-2 ">

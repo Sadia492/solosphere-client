@@ -2,27 +2,18 @@
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import JobCard from "./JobCard";
-import { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { AuthContext } from "../providers/AuthProvider";
 import LoadingSpinner from "./LoadingSpinner";
+import { useQuery } from "@tanstack/react-query";
 
 const TabCategories = () => {
-  const [jobs, setJobs] = useState();
-  const { setLoading, loading } = useContext(AuthContext);
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ["tabJobs"],
+    queryFn: async () => {
       const { data } = await axios.get(`${import.meta.env.VITE_URL}/jobs`);
-      setJobs(data);
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data;
+    },
+  });
 
   return (
     <Tabs>
@@ -43,10 +34,10 @@ const TabCategories = () => {
             <Tab>Digital Marketing</Tab>
           </TabList>
         </div>
-        {loading && <LoadingSpinner></LoadingSpinner>}
+        {isLoading && <LoadingSpinner></LoadingSpinner>}
         <TabPanel>
           <div className="grid grid-cols-1 gap-8 mt-8 xl:mt-16 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {!loading &&
+            {!isLoading &&
               jobs
                 ?.filter((job) => job.category === "Web Development")
                 .map((job) => <JobCard key={job._id} job={job}></JobCard>)}
@@ -55,7 +46,7 @@ const TabCategories = () => {
 
         <TabPanel>
           <div className="grid grid-cols-1 gap-8 mt-8 xl:mt-16 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {!loading &&
+            {!isLoading &&
               jobs
                 ?.filter((job) => job.category === "Graphics Design")
                 .map((job) => <JobCard key={job._id} job={job}></JobCard>)}
@@ -64,7 +55,7 @@ const TabCategories = () => {
 
         <TabPanel>
           <div className="grid grid-cols-1 gap-8 mt-8 xl:mt-16 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {!loading &&
+            {!isLoading &&
               jobs
                 ?.filter((job) => job.category === "Digital Marketing")
                 .map((job) => <JobCard key={job._id} job={job}></JobCard>)}

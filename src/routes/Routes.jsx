@@ -41,8 +41,6 @@ const router = createBrowserRouter([
             <JobDetails />
           </PrivateRoute>
         ),
-        loader: ({ params }) =>
-          fetch(`${import.meta.env.VITE_URL}/job/${params.id}`),
       },
       {
         path: "/update/:id",
@@ -51,7 +49,6 @@ const router = createBrowserRouter([
             <UpdateJob />
           </PrivateRoute>
         ),
-        loader: ({ params }) => fetch(`http://localhost:9000/job/${params.id}`),
       },
       {
         path: "/add-job",
